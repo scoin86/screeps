@@ -1,0 +1,62 @@
+var roleHarvester = {
+    
+    run: function(creep){
+        var targetRoom = new RoomPosition(25,25,creep.memory.home);
+        if (!this.gotoroom(creep.memory.work)){
+            return 0;
+        }
+        // if(creep.room.name!=homeroom){
+        //     creep.moveTo(new RoomPosition(43,31,homeroom));
+        // }
+        if(creep.carry.energy<1){
+            creep.memory.gather=true;
+        }
+        if(creep.carry.energy==creep.carryCapacity){
+            creep.memory.gather=false;
+        }
+        
+        if(creep.memory.gather==true){ 
+            var conts = creep.room.find(FIND_STRUCTURES, {filter:function(s){return s.structureType==STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY]>10}});
+            
+            if(conts.length>0){
+                var cont = creep.pos.findClosestByPath(conts);   
+                if(creep.withdraw(cont, RESOURCE_ENERGY)==ERR_NOT_IN_RANGE){
+                    creep.moveTo(cont);
+                }
+            }else{
+                
+            var sources = creep.room.find(FIND_SOURCES);
+            var closeSource = creep.pos.findClosestByPath(sources);
+            if(creep.harvest(closeSource)==ERR_NOT_IN_RANGE){
+            creep.moveTo(closeSource);
+            }
+            }
+        
+        }else if(creep.memory.gather==false){
+            
+            var spawnNext = creep.room.find(FIND_STRUCTURES, {filter:function(s){return s.energy<s.energyCapacity && (s.structureType==STRUCTURE_SPAWN || s.structureType==STRUCTURE_EXTENSION 
+             ||s.structureType==STRUCTURE_STORAGE)}});
+            if(spawnNext.length>0){
+                var nearestSpawn = creep.pos.findClosestByPath(spawnNext);
+                if(creep.transfer(nearestSpawn, RESOURCE_ENERGY)==ERR_NOT_IN_RANGE){
+                    creep.moveTo(nearestSpawn);
+                }
+            }else{
+                if(creep.upgradeController(creep.room.controller)==ERR_NOT_IN_RANGE){
+                    creep.moveTo(creep.room.controller);
+                }
+            }
+        }
+    },
+    gotoroom:function(room_name){
+        var creep= this.creep;
+        if (creep.room.name==room_name){
+            return true;
+        }
+        var exit_dir=Game.map.findExit(creep.room.name,room_name);
+        var exit= creep.pos.findClosestByRange(exit_dir);
+        creep.moveTo(exit);
+        return false;
+    }
+}
+module.exports = roleHarvester;
